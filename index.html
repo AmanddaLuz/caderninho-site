@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Caderninho — Controle de vendas fiado e cobrança automática pelo WhatsApp</title>
+  <meta name="description" content="Organize clientes, vendas fiado e cobranças em um só app. O Caderninho lembra as datas de pagamento e monta a mensagem de cobrança pelo WhatsApp para você.">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --background: #fffdf7;
+      --surface: #ffffff;
+      --text: #173d63;
+      --muted: #526579;
+      --rule: #8cb4d9;
+      --margin: #d86b62;
+      --link: #285a8a;
+      --accent: #184e77;
+      --accent-light: #7ab6d9;
+      --success: #2e6b3e;
+      --amber: #b86b00;
+      --radius: 20px;
+      --max: 1080px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --background: #151a20;
+        --surface: #1e252d;
+        --text: #e4edf7;
+        --muted: #bdc9d6;
+        --rule: #304b66;
+        --margin: #b45a54;
+        --link: #9bc7ed;
+        --accent: #9bc7ed;
+        --accent-light: #4f7ea3;
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      background:
+        linear-gradient(90deg, transparent 0 47px, var(--margin) 48px 49px, transparent 50px),
+        repeating-linear-gradient(var(--background) 0 31px, var(--rule) 32px 33px);
+      font: 16px/1.65 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    a { color: var(--link); }
+
+    .wrap {
+      width: min(var(--max), calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header.site {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(6px);
+      background: color-mix(in srgb, var(--background) 82%, transparent);
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 1.15rem;
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .brand svg { width: 32px; height: 32px; }
+
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .nav-links a:hover { color: var(--text); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 22px;
+      border-radius: 999px;
+      font-weight: 600;
+      text-decoration: none;
+      border: 1px solid transparent;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fffdf7;
+      box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 35%, transparent);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text);
+      border-color: var(--rule);
+    }
+
+    .btn-disabled {
+      background: color-mix(in srgb, var(--muted) 18%, transparent);
+      color: var(--muted);
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn-small { padding: 9px 16px; font-size: 0.85rem; }
+
+    /* Hero */
+    .hero {
+      padding: 72px 0 56px;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 48px;
+      align-items: center;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      color: var(--margin);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-size: 0.78rem;
+      margin-bottom: 14px;
+    }
+
+    .hero h1 {
+      font-size: clamp(2rem, 4vw, 2.9rem);
+      line-height: 1.15;
+      margin: 0 0 18px;
+    }
+
+    .hero p.lead {
+      color: var(--muted);
+      font-size: 1.08rem;
+      max-width: 46ch;
+      margin: 0 0 28px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .hero-note {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    /* Phone mockup */
+    .phone {
+      width: min(280px, 100%);
+      margin: 0 auto;
+      aspect-ratio: 9 / 19;
+      background: var(--surface);
+      border: 10px solid var(--text);
+      border-radius: 40px;
+      box-shadow: 0 30px 60px rgb(0 0 0 / 20%);
+      padding: 18px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+    }
+
+    .phone::before {
+      content: "";
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 6px;
+      border-radius: 4px;
+      background: var(--text);
+      opacity: 0.6;
+    }
+
+    .phone .screen-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-top: 10px;
+    }
+
+    .phone .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: color-mix(in srgb, var(--rule) 18%, transparent);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 0.78rem;
+    }
+
+    .phone .row .badge {
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 999px;
+    }
+
+    .badge-pending { background: color-mix(in srgb, var(--amber) 22%, transparent); color: var(--amber); }
+    .badge-paid { background: color-mix(in srgb, var(--success) 22%, transparent); color: var(--success); }
+    .badge-partial { background: color-mix(in srgb, var(--link) 20%, transparent); color: var(--link); }
+
+    .phone .cta-row {
+      margin-top: auto;
+      background: var(--accent);
+      color: #fffdf7;
+      text-align: center;
+      padding: 10px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.8rem;
+    }
+
+    section { padding: 64px 0; }
+
+    .section-head {
+      text-align: center;
+      max-width: 620px;
+      margin: 0 auto 44px;
+    }
+
+    .section-head .eyebrow { display: block; }
+
+    .section-head h2 {
+      font-size: clamp(1.6rem, 3vw, 2.1rem);
+      margin: 0 0 12px;
+    }
+
+    .section-head p { color: var(--muted); margin: 0; }
+
+    /* Feature grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 22px;
+    }
+
+    .card {
+      background: color-mix(in srgb, var(--surface) 96%, transparent);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius);
+      padding: 26px;
+      box-shadow: 0 12px 30px rgb(0 0 0 / 7%);
+    }
+
+    .card .icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: color-mix(in srgb, var(--accent) 14%, transparent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      font-size: 1.3rem;
+    }
+
+    .card h3 {
+      margin: 0 0 8px;
+      font-size: 1.08rem;
+    }
+
+    .card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    /* Steps */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 28px;
+      counter-reset: step;
+    }
+
+    .step {
+      position: relative;
+      padding-left: 54px;
+    }
+
+    .step::before {
+      counter-increment: step;
+      content: counter(step);
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fffdf7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+
+    .step h3 { margin: 0 0 6px; font-size: 1.02rem; }
+    .step p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+
+    /* Screenshots */
+    .screens {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 24px;
+      align-items: start;
+    }
+
+    .screen-caption {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-top: 12px;
+    }
+
+    /* Values / pain points (honest stand-in for testimonials) */
+    .quote-card {
+      background: color-mix(in srgb, var(--surface) 96%, transparent);
+      border-left: 4px solid var(--margin);
+      border-radius: 12px;
+      padding: 22px 24px;
+      font-style: italic;
+      color: var(--text);
+    }
+
+    .quote-card footer {
+      margin-top: 12px;
+      font-style: normal;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    /* FAQ */
+    details {
+      background: var(--surface);
+      border: 1px solid var(--rule);
+      border-radius: 14px;
+      padding: 16px 20px;
+      margin-bottom: 14px;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      list-style: none;
+    }
+
+    summary::-webkit-details-marker { display: none; }
+
+    summary::after {
+      content: "+";
+      float: right;
+      font-weight: 700;
+      color: var(--margin);
+    }
+
+    details[open] summary::after { content: "–"; }
+
+    details p {
+      color: var(--muted);
+      margin: 12px 0 0;
+    }
+
+    /* Final CTA */
+    .cta-final {
+      text-align: center;
+      background: color-mix(in srgb, var(--accent) 10%, transparent);
+      border-radius: 28px;
+      padding: 56px 24px;
+    }
+
+    .cta-final h2 { margin: 0 0 12px; font-size: clamp(1.5rem, 3vw, 2rem); }
+    .cta-final p { color: var(--muted); margin: 0 0 26px; }
+
+    footer.site {
+      border-top: 1px solid var(--rule);
+      padding: 32px 0;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .footer-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 18px;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      flex-wrap: wrap;
+    }
+
+    .footer-links a { color: var(--muted); text-decoration: none; }
+    .footer-links a:hover { color: var(--text); }
+
+    @media (max-width: 860px) {
+      .hero { grid-template-columns: 1fr; padding-top: 40px; }
+      .hero-actions { justify-content: center; }
+      .hero > div:first-child { text-align: center; }
+      .hero p.lead { margin-inline: auto; }
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="site">
+    <div class="wrap nav">
+      <a href="#" class="brand">
+        <svg viewBox="0 0 108 108" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path fill="#184E77" d="M27,25h54a7,7 0,0 1,7 7v50a7,7 0,0 1,-7 7h-54a7,7 0,0 1,-7 -7v-50a7,7 0,0 1,7 -7z"/>
+          <path fill="#FFFDF7" d="M30,28h48a4,4 0,0 1,4 4v44a4,4 0,0 1,-4 4h-48a4,4 0,0 1,-4 -4v-44a4,4 0,0 1,4 -4z"/>
+          <path fill="#D86B62" d="M34,25h2v64h-2z"/>
+          <path fill="#8CB4D9" d="M27,43h54v2h-54zM27,56h54v2h-54zM27,69h54v2h-54z"/>
+          <path fill="#285A8A" d="M43,37h29v4h-29zM43,50h24v4h-24zM43,63h30v4h-30zM43,76h18v4h-18z"/>
+        </svg>
+        Caderninho
+      </a>
+      <ul class="nav-links">
+        <li><a href="#funcionalidades">Funcionalidades</a></li>
+        <li><a href="#como-funciona">Como funciona</a></li>
+        <li><a href="#telas">Telas</a></li>
+        <li><a href="#faq">Dúvidas</a></li>
+      </ul>
+      <a href="#baixar" class="btn btn-primary btn-small">Baixar</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero wrap">
+      <div>
+        <span class="eyebrow">Controle de vendas fiado</span>
+        <h1>Chega de anotar fiado no caderno e esquecer de cobrar.</h1>
+        <p class="lead">
+          O Caderninho organiza seus clientes, vendas e datas de pagamento —
+          e monta a mensagem de cobrança pronta pra você enviar pelo WhatsApp,
+          na hora certa.
+        </p>
+        <div class="hero-actions">
+          <a href="#baixar" class="btn btn-disabled" aria-disabled="true">
+            📲 Em breve na Play Store
+          </a>
+          <a href="#como-funciona" class="btn btn-secondary">Ver como funciona</a>
+        </div>
+        <p class="hero-note">Seus dados ficam no seu aparelho. Sem anúncios, sem rastreamento.</p>
+      </div>
+      <div>
+        <div class="phone" role="img" aria-label="Prévia ilustrativa da tela de detalhes do cliente no Caderninho">
+          <div class="screen-title">Ana Paula</div>
+          <div class="row"><span>Corte + escova — R$ 45,00</span><span class="badge badge-pending">Pendente</span></div>
+          <div class="row"><span>Produto X — R$ 57,00</span><span class="badge badge-partial">Parcial</span></div>
+          <div class="row"><span>Manicure — R$ 30,00</span><span class="badge badge-paid">Pago</span></div>
+          <div class="cta-row">Enviar cobrança pelo WhatsApp</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="funcionalidades" class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Funcionalidades</span>
+        <h2>Feito para quem vende fiado no dia a dia</h2>
+        <p>Pensado para autônomos, cabeleireiras, costureiras e prestadores de serviço que precisam manter o controle sem complicação.</p>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <div class="icon">👤</div>
+          <h3>Cadastro de clientes</h3>
+          <p>Nome, telefone, CPF opcional e busca rápida — mesmo com uma base grande de clientes.</p>
+        </div>
+        <div class="card">
+          <div class="icon">🧾</div>
+          <h3>Vendas e serviços fiado</h3>
+          <p>Registre a venda, o valor e a data prevista de pagamento em poucos toques.</p>
+        </div>
+        <div class="card">
+          <div class="icon">⏰</div>
+          <h3>Lembrete automático</h3>
+          <p>O app avisa quando chega a data de pagamento, pra você nunca mais perder uma cobrança.</p>
+        </div>
+        <div class="card">
+          <div class="icon">💬</div>
+          <h3>Cobrança pelo WhatsApp</h3>
+          <p>Mensagem de cobrança personalizável, já com sua chave Pix, pronta pra enviar.</p>
+        </div>
+        <div class="card">
+          <div class="icon">👛</div>
+          <h3>Carteira do cliente</h3>
+          <p>Cliente pagou só uma parte? Registre pagamentos parciais e acompanhe o saldo devedor.</p>
+        </div>
+        <div class="card">
+          <div class="icon">✅</div>
+          <h3>Baixa em lote</h3>
+          <p>Confirme várias cobranças pagas de uma vez, sem precisar abrir venda por venda.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="como-funciona" class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Como funciona</span>
+        <h2>Do cadastro à cobrança em 3 passos</h2>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <h3>Cadastre o cliente</h3>
+          <p>Nome, telefone e, se quiser, CPF. Busque depois por nome ou telefone quando precisar.</p>
+        </div>
+        <div class="step">
+          <h3>Registre a venda</h3>
+          <p>Informe o valor e a data prevista de pagamento do fiado ou serviço.</p>
+        </div>
+        <div class="step">
+          <h3>Receba o lembrete e cobre</h3>
+          <p>Na data combinada, o Caderninho avisa e já deixa a mensagem de cobrança pronta pro WhatsApp.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="telas" class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Telas do app</span>
+        <h2>Simples de usar, do jeito que um caderninho deveria ser</h2>
+        <p>Prévias ilustrativas da interface — as telas reais podem variar conforme a versão publicada.</p>
+      </div>
+      <div class="screens">
+        <div>
+          <div class="phone" role="img" aria-label="Prévia ilustrativa da lista de clientes">
+            <div class="screen-title">Clientes</div>
+            <div class="row"><span>🔍 Buscar por nome ou telefone</span><span></span></div>
+            <div class="row"><span>Ana Paula</span><span class="badge badge-pending">R$ 45</span></div>
+            <div class="row"><span>Bruno Souza</span><span class="badge badge-paid">Em dia</span></div>
+            <div class="row"><span>Clara Lima</span><span class="badge badge-partial">R$ 20</span></div>
+            <div class="cta-row">+ Novo cliente</div>
+          </div>
+          <p class="screen-caption">Busca rápida por nome ou telefone</p>
+        </div>
+        <div>
+          <div class="phone" role="img" aria-label="Prévia ilustrativa da tela de nova venda">
+            <div class="screen-title">Nova venda</div>
+            <div class="row"><span>Descrição</span><span></span></div>
+            <div class="row"><span>Valor</span><span>R$ 57,00</span></div>
+            <div class="row"><span>Vencimento</span><span>15/01</span></div>
+            <div class="cta-row">Salvar venda</div>
+          </div>
+          <p class="screen-caption">Data prevista de pagamento sempre visível</p>
+        </div>
+        <div>
+          <div class="phone" role="img" aria-label="Prévia ilustrativa da carteira do cliente">
+            <div class="screen-title">Carteira — Clara</div>
+            <div class="row"><span>Saldo devedor</span><span>R$ 20,00</span></div>
+            <div class="row"><span>Valor recebido</span><span></span></div>
+            <div class="row"><span>Aplicar nas vendas mais antigas</span><span>sugerido</span></div>
+            <div class="cta-row">Confirmar pagamento</div>
+          </div>
+          <p class="screen-caption">Pagamentos parciais com sugestão automática</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Por que o Caderninho</span>
+        <h2>O problema que a gente resolve</h2>
+      </div>
+      <div class="grid">
+        <blockquote class="quote-card">
+          “Perder o controle de quem já pagou e quem ainda deve é o motivo
+          mais comum de dor de cabeça pra quem vende fiado.”
+          <footer>— Por isso existe o Caderninho</footer>
+        </blockquote>
+        <blockquote class="quote-card">
+          “Cobrar dá vergonha e dá trabalho. O app monta a mensagem,
+          você só confere e envia.”
+          <footer>— Cobrança sem constrangimento</footer>
+        </blockquote>
+        <blockquote class="quote-card">
+          “Cliente pagou só uma parte? Sem planilha, sem bloco de notas —
+          o saldo fica registrado certinho.”
+          <footer>— Carteira do cliente</footer>
+        </blockquote>
+      </div>
+    </section>
+
+    <section id="faq" class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Dúvidas frequentes</span>
+        <h2>Perguntas e respostas</h2>
+      </div>
+      <details>
+        <summary>O Caderninho é gratuito?</summary>
+        <p>O app está em fase de testes fechados antes do lançamento oficial na Play Store. As condições de uso serão divulgadas no lançamento.</p>
+      </details>
+      <details>
+        <summary>Preciso de internet para usar?</summary>
+        <p>Não. Clientes e vendas ficam salvos no seu aparelho. Internet só é necessária para enviar a cobrança pelo WhatsApp.</p>
+      </details>
+      <details>
+        <summary>Onde meus dados ficam salvos?</summary>
+        <p>Localmente, no seu próprio aparelho, em uma área privada do aplicativo. Veja todos os detalhes na <a href="https://amanddaluz.github.io/caderninho-privacy/">política de privacidade</a>.</p>
+      </details>
+      <details>
+        <summary>A cobrança é enviada automaticamente pelo WhatsApp?</summary>
+        <p>O Caderninho monta a mensagem (com valor, vencimento e chave Pix, se configurada) e abre o WhatsApp pronto para envio. Por limitação do próprio WhatsApp, o envio final é sempre confirmado por você.</p>
+      </details>
+      <details>
+        <summary>Funciona para qualquer tipo de negócio fiado?</summary>
+        <p>Sim. Foi pensado para autônomos e pequenos negócios que vendem a prazo: salões, costura, assistência técnica, revenda e serviços em geral.</p>
+      </details>
+    </section>
+
+    <section id="baixar" class="wrap">
+      <div class="cta-final">
+        <h2>Organize seu fiado antes mesmo do próximo cliente chegar.</h2>
+        <p>O Caderninho está em testes fechados. Em breve, disponível na Play Store.</p>
+        <a href="#" class="btn btn-disabled" aria-disabled="true">📲 Em breve na Play Store</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site">
+    <div class="wrap footer-grid">
+      <span>© <span id="year"></span> Caderninho — controle local de clientes e vendas.</span>
+      <ul class="footer-links">
+        <li><a href="https://amanddaluz.github.io/caderninho-privacy/">Política de privacidade</a></li>
+        <li><a href="https://wa.me/55XXXXXXXXXXX" target="_blank" rel="noopener">Contato via WhatsApp</a></li>
+      </ul>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
